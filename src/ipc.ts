@@ -13,6 +13,7 @@ import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
 import { logger } from './logger.js';
+import { runSelfRestart, runSelfUpdateAgent } from './self-update.js';
 import { RegisteredGroup } from './types.js';
 
 export interface IpcDeps {
@@ -163,6 +164,7 @@ export async function processTaskIpc(
     groupFolder?: string;
     chatJid?: string;
     targetJid?: string;
+    description?: string;
     // For register_group
     jid?: string;
     name?: string;
@@ -381,7 +383,64 @@ export async function processTaskIpc(
       }
       break;
 
+    case 'self_update': {
+      if (!isMain) {
+        logger.warn({ sourceGroup }, 'Unauthorized self_update attempt blocked');
+        break;
+      }
+      if (!data.description) {
+        logger.warn({ sourceGroup }, 'self_update missing description, ignoring');
+        break;
+      }
+      const mainJid = findMainJid(registeredGroups);
+      if (!mainJid) {
+        logger.warn('self_update: no main JID found in registeredGroups');
+        break;
+      }
+      deps.sendMessage(mainJid, 'Working on it...').catch((err) =>
+        logger.warn({ err }, 'Failed to send self_update ack'),
+      );
+      // Fire and forget — do not await so the IPC watcher isn't blocked
+      runSelfUpdateAgent(data.description, (msg) => {
+        deps.sendMessage(mainJid, msg).catch((err) =>
+          logger.warn({ err }, 'Failed to send self_update status'),
+        );
+      }).then((result) => {
+        const reply = result.prUrl
+          ? `PR ready for review: ${result.prUrl}`
+          : `Self-update failed: ${result.error}`;
+        deps.sendMessage(mainJid, reply).catch((err) =>
+          logger.warn({ err }, 'Failed to send self_update result'),
+        );
+      });
+      break;
+    }
+
+    case 'self_restart': {
+      if (!isMain) {
+        logger.warn({ sourceGroup }, 'Unauthorized self_restart attempt blocked');
+        break;
+      }
+      const mainJid = findMainJid(registeredGroups);
+      if (!mainJid) {
+        logger.warn('self_restart: no main JID found in registeredGroups');
+        break;
+      }
+      runSelfRestart((msg) => {
+        deps.sendMessage(mainJid, msg).catch((err) =>
+          logger.warn({ err }, 'Failed to send self_restart message'),
+        );
+      });
+      break;
+    }
+
     default:
       logger.warn({ type: data.type }, 'Unknown IPC task type');
   }
+}
+
+function findMainJid(groups: Record<string, RegisteredGroup>): string | undefined {
+  return Object.entries(groups).find(
+    ([, group]) => group.folder === MAIN_GROUP_FOLDER,
+  )?.[0];
 }

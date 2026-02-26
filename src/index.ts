@@ -3,6 +3,7 @@ import path from 'path';
 
 import {
   ASSISTANT_NAME,
+  DATA_DIR,
   IDLE_TIMEOUT,
   MAIN_GROUP_FOLDER,
   POLL_INTERVAL,
@@ -478,6 +479,28 @@ async function main(): Promise<void> {
   whatsapp = new WhatsAppChannel(channelOpts);
   channels.push(whatsapp);
   await whatsapp.connect();
+
+  // Check for pending restart notification (written by runSelfRestart before restarting)
+  const restartFlagFile = path.join(DATA_DIR, '.self_restart_pending');
+  if (fs.existsSync(restartFlagFile)) {
+    try {
+      fs.unlinkSync(restartFlagFile);
+      const mainJid = Object.entries(registeredGroups).find(
+        ([, group]) => group.folder === MAIN_GROUP_FOLDER,
+      )?.[0];
+      if (mainJid) {
+        // Delay slightly to let the WhatsApp connection settle
+        setTimeout(() => {
+          const channel = findChannel(channels, mainJid);
+          channel?.sendMessage(mainJid, '✓ Back online.').catch((err) =>
+            logger.warn({ err }, 'Failed to send back-online message'),
+          );
+        }, 2000);
+      }
+    } catch (err) {
+      logger.warn({ err }, 'Failed to process self_restart_pending flag');
+    }
+  }
 
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({
