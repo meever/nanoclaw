@@ -1,367 +1,835 @@
-﻿<!doctype html>
-<html lang='en'>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset='utf-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>NanoClaw Learning Book</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NanoClaw &mdash; Learning Book</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: Segoe UI, Arial, sans-serif; margin: 0; padding: 0; line-height: 1.55; }
-    main { max-width: 980px; margin: 0 auto; padding: 24px; }
-    h1, h2, h3 { line-height: 1.2; }
-    nav { padding: 16px; border: 1px solid #7f7f7f55; border-radius: 8px; margin-bottom: 24px; }
-    nav ul { margin: 0; padding-left: 20px; }
-    .chapter { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #7f7f7f33; }
-    pre { overflow: auto; padding: 12px; border-radius: 8px; background: #00000018; }
-    code { font-family: Consolas, Menlo, monospace; }
-    a { text-decoration: none; }
-    a:hover { text-decoration: underline; }
+/* ===== Variables ===== */
+:root {
+  --bg:          #f5f3ef;
+  --surface:     #ffffff;
+  --text:        #2d3748;
+  --text-muted:  #718096;
+  --accent:      #5b4cd8;
+  --accent-soft: #eeeaff;
+  --border:      #e2e0dc;
+  --green:       #2f9e44;
+  --exercise-bg: #f0fdf4;
+  --code-bg:     #282c34;
+  --code-text:   #abb2bf;
+  --chapter-num: #eeeaff;
+  --diagram-bg:  #f8f7ff;
+  --shadow:      0 1px 3px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:          #0f1219;
+  --surface:     #1a2030;
+  --text:        #e2e8f0;
+  --text-muted:  #94a3b8;
+  --accent:      #a78bfa;
+  --accent-soft: #1e1b3a;
+  --border:      #2d3548;
+  --green:       #4ade80;
+  --exercise-bg: #0a2618;
+  --code-bg:     #0d1117;
+  --code-text:   #c9d1d9;
+  --chapter-num: #1e1b3a;
+  --diagram-bg:  #1a1832;
+  --shadow:      0 1px 4px rgba(0,0,0,.3);
+}}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Progress bar ===== */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), #e879f9);
+  z-index: 200; width: 0; transition: width 120ms ease-out;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ===== Layout ===== */
+.layout {
+  max-width: 1380px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 28px;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  position: sticky; top: 20px; align-self: start;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto; overflow-x: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 18px;
+  box-shadow: var(--shadow);
+}
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px;
+}
+.sidebar-brand svg { flex-shrink: 0; }
+.sidebar-brand h1 {
+  margin: 0; font-size: 1.1rem; font-weight: 700;
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  letter-spacing: -0.01em;
+}
+.sidebar > p {
+  margin: 0 0 18px; color: var(--text-muted);
+  font-size: 0.82rem; line-height: 1.5;
+}
+.sidebar h2 {
+  margin: 0 0 8px; color: var(--text-muted);
+  font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.1em; font-weight: 600;
+}
+.sidebar ul { list-style: none; margin: 0; padding: 0; }
+.sidebar li + li { margin-top: 2px; }
+.sidebar a {
+  display: flex; align-items: baseline; gap: 8px;
+  color: var(--text); text-decoration: none;
+  padding: 7px 10px; border-radius: 8px;
+  font-size: 0.86rem; line-height: 1.35;
+  transition: background .15s, color .15s;
+}
+.sidebar a:hover { background: var(--accent-soft); color: var(--accent); }
+.sidebar a.active {
+  background: var(--accent-soft); color: var(--accent);
+  font-weight: 600;
+}
+.toc-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 20px;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--accent); background: var(--accent-soft);
+  border-radius: 5px; flex-shrink: 0;
+}
+
+/* ===== Content ===== */
+.content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0;
+  min-width: 0;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ===== Book Cover ===== */
+.book-cover {
+  background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 50%, #e879f9 100%);
+  color: #fff;
+  padding: 52px 42px 44px;
+  text-align: center;
+}
+.cover-badge {
+  display: inline-block;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background: rgba(255,255,255,.18); backdrop-filter: blur(4px);
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 18px;
+}
+.book-cover h1 {
+  margin: 0 0 10px;
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: 2.6rem; line-height: 1.15;
+  font-weight: 700; letter-spacing: -0.02em;
+}
+.book-cover p {
+  margin: 0; font-size: 1.05rem; opacity: .88; max-width: 520px;
+  margin: 0 auto; line-height: 1.55;
+}
+.cover-meta {
+  margin-top: 22px; font-size: 0.82rem; opacity: .7;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.meta-dot { font-size: 0.5rem; }
+
+/* ===== Chapter ===== */
+.chapters-wrap { padding: 10px 40px 50px; }
+
+.chapter {
+  padding: 44px 0 40px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 20px;
+  position: relative;
+}
+.chapter:last-child { border-bottom: none; padding-bottom: 0; }
+
+.chapter-num {
+  font-size: 5.5rem; font-weight: 800; line-height: 1;
+  color: var(--chapter-num); letter-spacing: -0.04em;
+  margin-bottom: -18px; user-select: none;
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+}
+
+.chapter-title {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: 1.75rem; line-height: 1.25;
+  margin: 0 0 24px; font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.chapter-body { }
+
+/* ===== Typography ===== */
+h1, h2, h3 { line-height: 1.3; }
+.chapter-body h1 {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: 1.5rem; margin: 36px 0 14px;
+}
+.chapter-body h2 {
+  font-size: 1.2rem; margin: 32px 0 12px;
+  color: var(--accent); font-weight: 700;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--accent-soft);
+}
+.chapter-body h3 {
+  font-size: 1.05rem; margin: 24px 0 10px; font-weight: 600;
+}
+.chapter-body p {
+  margin: 0 0 14px;
+}
+.chapter-body ul, .chapter-body ol {
+  margin: 0 0 14px; padding-left: 24px;
+}
+.chapter-body li { margin-bottom: 5px; }
+.chapter-body li::marker { color: var(--accent); }
+
+blockquote {
+  margin: 16px 0; padding: 12px 20px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+}
+blockquote p { margin: 0; }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+hr {
+  border: none; height: 1px;
+  background: var(--border); margin: 28px 0;
+}
+
+/* ===== Inline code ===== */
+code {
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.88em;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  font-weight: 500;
+}
+pre code {
+  background: transparent; color: inherit;
+  padding: 0; font-weight: 400;
+}
+
+/* ===== Code blocks ===== */
+.code-wrap {
+  position: relative; margin: 18px 0;
+  border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.code-wrap pre {
+  margin: 0;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; overflow-x: auto;
+  font-size: 0.88rem; line-height: 1.6;
+  border-radius: 0; border: none;
+}
+.lang-badge {
+  position: absolute; top: 0; right: 0;
+  font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  background: rgba(255,255,255,.08); color: var(--code-text);
+  border-radius: 0 10px 0 8px;
+  opacity: .6;
+}
+
+/* ===== Math blocks ===== */
+.math-block {
+  text-align: center;
+  margin: 22px 0;
+  padding: 18px 20px;
+  background: var(--accent-soft);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  font-size: 1.1em;
+}
+
+/* ===== Mermaid diagrams ===== */
+.diagram-wrap {
+  margin: 22px 0;
+  padding: 20px;
+  background: var(--diagram-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  overflow-x: auto;
+}
+.diagram-wrap pre.mermaid {
+  background: transparent; border: none;
+  padding: 0; margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ===== Exercise callout ===== */
+.callout {
+  margin: 22px 0; padding: 16px 20px;
+  border-radius: 0 10px 10px 0;
+}
+.callout.exercise {
+  border-left: 4px solid var(--green);
+  background: var(--exercise-bg);
+}
+.callout-title {
+  font-weight: 700; font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--green); margin-bottom: 6px;
+}
+.callout p { margin: 0; }
+
+/* ===== Tables ===== */
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 16px 0; font-size: 0.92rem;
+}
+th, td {
+  text-align: left; padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+th { font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; padding: 12px; gap: 16px; }
+  .sidebar { position: static; max-height: none; }
+  .chapters-wrap { padding: 10px 20px 40px; }
+  .book-cover { padding: 36px 24px 32px; }
+  .book-cover h1 { font-size: 1.8rem; }
+  .chapter-num { font-size: 3.5rem; }
+}
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  .chapters-wrap { padding: 8px 14px 30px; }
+  .chapter-title { font-size: 1.35rem; }
+}
+
+/* ===== Print ===== */
+@media print {
+  .sidebar, #progress { display: none; }
+  .layout { display: block; }
+  .content { border: none; box-shadow: none; }
+  .book-cover { background: none; color: var(--text); padding: 20px 0; }
+  .chapter { page-break-inside: avoid; }
+}
   </style>
 </head>
 <body>
-  <main>
-    <h1>NanoClaw Learning Book</h1>
-    <p>Generated from markdown chapters in <code>learn/chapters</code>.</p>
-    <nav>
-      <h2>Table of Contents</h2>
+  <div id="progress"></div>
+  <div class="layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <h1>NanoClaw</h1>
+      </div>
+      <p>A beginner&rsquo;s guide to Claude agents, TypeScript orchestration, and container isolation.</p>
+      <h2>Contents</h2>
       <ul>
-        <li><a href='#00-roadmap'>00-roadmap</a></li>
-        <li><a href='#01-system-overview'>01-system-overview</a></li>
-        <li><a href='#02-runtime-message-flow'>02-runtime-message-flow</a></li>
-        <li><a href='#03-ipc-and-authorization'>03-ipc-and-authorization</a></li>
-        <li><a href='#04-container-and-agent-runner'>04-container-and-agent-runner</a></li>
-        <li><a href='#05-data-model-and-state'>05-data-model-and-state</a></li>
-        <li><a href='#06-skills-and-customization'>06-skills-and-customization</a></li>
-        <li><a href='#07-operations-and-debugging'>07-operations-and-debugging</a></li>
-        <li><a href='#08-orchestrator-deep-dive'>08-orchestrator-deep-dive</a></li>
-        <li><a href='#09-scheduler-and-task-engine'>09-scheduler-and-task-engine</a></li>
-        <li><a href='#10-routing-and-channels'>10-routing-and-channels</a></li>
-        <li><a href='#11-safe-change-playbook'>11-safe-change-playbook</a></li>
+<li><a href='#01-nanoclaw-orientation-and-learning-path'><span class='toc-num'>01</span>NanoClaw Orientation and Learning Path</a></li>
+<li><a href='#02-typescript-essentials-for-this-repo'><span class='toc-num'>02</span>TypeScript Essentials for This Repo</a></li>
+<li><a href='#03-how-claude-agents-work-in-nanoclaw'><span class='toc-num'>03</span>How Claude Agents Work in NanoClaw</a></li>
+<li><a href='#04-local-setup-and-first-safe-run'><span class='toc-num'>04</span>Local Setup and First Safe Run</a></li>
+<li><a href='#05-configuration-and-environment-model'><span class='toc-num'>05</span>Configuration and Environment Model</a></li>
+<li><a href='#06-architecture-deep-dive-orchestrator-components'><span class='toc-num'>06</span>Architecture Deep Dive: Orchestrator Components</a></li>
+<li><a href='#07-channel-intake-and-message-normalization'><span class='toc-num'>07</span>Channel Intake and Message Normalization</a></li>
+<li><a href='#08-routing-and-outbound-response-path'><span class='toc-num'>08</span>Routing and Outbound Response Path</a></li>
+<li><a href='#09-container-runtime-and-agent-execution'><span class='toc-num'>09</span>Container Runtime and Agent Execution</a></li>
+<li><a href='#10-ipc-and-task-processing-loop'><span class='toc-num'>10</span>IPC and Task Processing Loop</a></li>
+<li><a href='#11-sqlite-state-and-data-models'><span class='toc-num'>11</span>SQLite State and Data Models</a></li>
+<li><a href='#12-scheduler-and-periodic-workloads'><span class='toc-num'>12</span>Scheduler and Periodic Workloads</a></li>
+<li><a href='#13-skills-system-and-customization-workflow'><span class='toc-num'>13</span>Skills System and Customization Workflow</a></li>
+<li><a href='#14-testing-debugging-and-observability'><span class='toc-num'>14</span>Testing, Debugging, and Observability</a></li>
+<li><a href='#15-security-and-isolation-principles'><span class='toc-num'>15</span>Security and Isolation Principles</a></li>
+<li><a href='#16-operations-updates-and-production-readiness'><span class='toc-num'>16</span>Operations, Updates, and Production Readiness</a></li>
       </ul>
-    </nav>
-    <section class='chapter' id='00-roadmap'><h1>Chapter 00 — Roadmap</h1>
-<p>This learning track is designed to move from high-level understanding to implementation detail.</p>
-<h2>How to use this</h2>
+    </aside>
+
+    <main class="content">
+      <header class="book-cover">
+        <div class="cover-badge">Learning Guide</div>
+        <h1>NanoClaw</h1>
+        <p>A hands-on path from zero to production &mdash; Claude agents, TypeScript orchestration, and container isolation.</p>
+        <div class="cover-meta">
+          <span>16 Chapters</span>
+          <span class="meta-dot">&middot;</span>
+          <span>From Zero to Production</span>
+        </div>
+      </header>
+
+      <div class="chapters-wrap">
+<article class='chapter' id='01-nanoclaw-orientation-and-learning-path'><div class='chapter-num'>01</div><h1 class='chapter-title'>NanoClaw Orientation and Learning Path</h1><div class='chapter-body'><p>NanoClaw is a host orchestrator that receives channel messages, executes Claude agents in isolated containers, and routes replies back to users. The host process is the authority layer; containers are execution workers with constrained filesystem access. This book starts with mental models first, then implementation details.</p>
+<h2>What you should understand after this chapter</h2>
 <ul>
-<li>Read chapters in order.</li>
-<li>Keep <code>src/index.ts</code> open while reading Chapters 1–3.</li>
-<li>For each chapter, map concepts to concrete files.</li>
+<li>What lives in host code vs container code</li>
+<li>Why group isolation is central to safety</li>
+<li>Which folders to read first</li>
+<li>How one message flows at a high level</li>
 </ul>
-<h2>Learning outcomes</h2>
-<p>After this track, you should be able to:</p>
+<h2>Diagram: bird’s-eye architecture</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart LR
+  U[User Channel] --&gt; H[Host Orchestrator]
+  H --&gt; D[(SQLite)]
+  H --&gt; Q[Group Queue]
+  Q --&gt; C[Container Agent]
+  C --&gt; I[IPC Files]
+  I --&gt; H
+  H --&gt; R[Outbound Reply]</pre></div>
+<h2>Minimal vocabulary</h2>
 <ul>
-<li>Explain NanoClaw's trust boundaries and where isolation is enforced.</li>
-<li>Trace one message from inbound channel to outbound reply.</li>
-<li>Add or modify behavior safely without breaking scheduling or IPC.</li>
-<li>Diagnose common failures using logs and component boundaries.</li>
+<li><strong>Channel adapter</strong>: translates platform events to internal messages.</li>
+<li><strong>Orchestrator</strong>: startup, polling, queueing, routing.</li>
+<li><strong>Group folder</strong>: per-group workspace and memory.</li>
+<li><strong>IPC</strong>: file-based host/container communication.</li>
 </ul>
-<h2>Source map</h2>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>open <code>src/index.ts</code>, <code>src/channels/whatsapp.ts</code>, and <code>src/container-runner.ts</code>, then write one sentence for each file’s purpose.</p></div></div></article>
+<article class='chapter' id='02-typescript-essentials-for-this-repo'><div class='chapter-num'>02</div><h1 class='chapter-title'>TypeScript Essentials for This Repo</h1><div class='chapter-body'><p>You do not need “all TypeScript” to work effectively here. You need a small subset: interfaces, optional fields, async/await, and safe narrowing of uncertain values. NanoClaw uses these patterns repeatedly across orchestrator, scheduler, and channel modules.</p>
+<h2>Core patterns in this codebase</h2>
 <ul>
-<li><code>src/index.ts</code>: orchestration and loop wiring</li>
-<li><code>src/channels/whatsapp.ts</code>: channel integration</li>
-<li><code>src/router.ts</code>: outbound formatting and routing</li>
-<li><code>src/container-runner.ts</code>: container invocation</li>
-<li><code>src/ipc.ts</code>: IPC watcher and task processing</li>
-<li><code>src/task-scheduler.ts</code>: scheduled task execution</li>
-<li><code>src/db.ts</code>: persistence layer</li>
-</ul></section>
-    <section class='chapter' id='01-system-overview'><h1>Chapter 01 — System Overview</h1>
-<p>NanoClaw is a single Node.js host process that receives messages, stores state in SQLite, and delegates agent reasoning to isolated containers.</p>
-<h2>Core architectural pieces</h2>
-<ul>
-<li>Host orchestrator (<code>src/index.ts</code>): process lifecycle, queueing, and subsystem startup.</li>
-<li>Channel adapters (<code>src/channels/*</code>): transport-specific inbound/outbound integration.</li>
-<li>SQLite persistence (<code>src/db.ts</code>): messages, tasks, router state, sessions metadata.</li>
-<li>Scheduler (<code>src/task-scheduler.ts</code>): evaluates due tasks and triggers execution.</li>
-<li>IPC watcher (<code>src/ipc.ts</code>): file-based bridge between container and host.</li>
-<li>Container runner (<code>src/container-runner.ts</code>): isolated execution environment.</li>
+<li><code>interface</code> contracts between modules (<code>Channel</code>, <code>ScheduledTask</code>)</li>
+<li><code>Record&lt;string, T&gt;</code> maps for state (<code>sessions</code>, cursors)</li>
+<li>Optional members (<code>setTyping?</code>) and optional chaining (<code>obj?.x</code>)</li>
+<li>Async pipelines with <code>Promise</code> and <code>await</code></li>
 </ul>
-<h2>Trust boundaries</h2>
-<ul>
-<li>Main group: administrative authority.</li>
-<li>Non-main groups: untrusted by default.</li>
-<li>Container agents: sandboxed and constrained to mounts.</li>
-<li>Host process: authority for routing, auth checks, and task writes.</li>
-</ul>
-<h2>Why this shape works</h2>
-<ul>
-<li>Keeps mutable authority in one place (host).</li>
-<li>Moves reasoning and tool execution into isolated sandboxes.</li>
-<li>Uses simple primitives (SQLite + filesystem IPC) for debuggability.</li>
-</ul></section>
-    <section class='chapter' id='02-runtime-message-flow'><h1>Chapter 02 — Runtime Message Flow</h1>
-<p>This chapter traces one inbound chat message to its eventual reply.</p>
-<h2>1) Channel ingestion</h2>
-<p>The channel adapter receives a message and calls orchestrator callbacks:</p>
-<ul>
-<li>Persist inbound message.</li>
-<li>Persist chat metadata.</li>
-<li>Associate message with channel-specific JID.</li>
-</ul>
-<h2>2) Queue and polling</h2>
-<p>The orchestrator polling loop discovers unprocessed messages and enqueues work by group.</p>
-<ul>
-<li>Per-group ordering is maintained.</li>
-<li>Global concurrency limits prevent resource exhaustion.</li>
-</ul>
-<h2>3) Group processing</h2>
-<p>For each queue item:</p>
-<ul>
-<li>Resolve registered group and policy (<code>requiresTrigger</code>, trigger patterns).</li>
-<li>Gather recent context and state.</li>
-<li>Start or reuse container execution path.</li>
-</ul>
-<h2>4) Agent execution</h2>
-<p><code>src/container-runner.ts</code> prepares mounts and environment, then invokes the agent runner.</p>
-<ul>
-<li>Group folder is writable.</li>
-<li>Global memory and project mounts are controlled by role and policy.</li>
-</ul>
-<h2>5) Output routing</h2>
-<p>Agent output is post-processed and sent through <code>src/router.ts</code>.</p>
-<ul>
-<li>Formatting normalizes outbound content.</li>
-<li>Correct channel is selected by JID ownership.</li>
-</ul></section>
-    <section class='chapter' id='03-ipc-and-authorization'><h1>Chapter 03 — IPC and Authorization</h1>
-<p>NanoClaw uses file-based IPC for container-to-host requests.</p>
-<h2>IPC layout</h2>
-<ul>
-<li>Base: <code>data/ipc/{groupFolder}/</code></li>
-<li>Messages: <code>messages/*.json</code></li>
-<li>Tasks: <code>tasks/*.json</code></li>
-<li>Errors: <code>data/ipc/errors/</code></li>
-</ul>
-<h2>Why group-folder identity matters</h2>
-<p>The source identity is derived from the directory path, not just payload content.</p>
-<ul>
-<li>Prevents spoofing by payload-only claims.</li>
-<li>Enables clear main/non-main authorization decisions.</li>
-</ul>
-<h2>Authorization patterns</h2>
-<ul>
-<li>Main group can perform admin operations.</li>
-<li>Non-main groups are restricted to self-scoped operations.</li>
-<li>Sensitive operations are rejected when identity or ownership fails.</li>
-</ul>
-<h2>Practical audit checks</h2>
-<ul>
-<li>Every new IPC task type should include explicit auth checks.</li>
-<li>Task handlers should fail closed on missing required fields.</li>
-<li>Rejections should log source context for forensics.</li>
-</ul></section>
-    <section class='chapter' id='04-container-and-agent-runner'><h1>Chapter 04 — Container and Agent Runner</h1>
-<p>Container execution is NanoClaw's main security boundary.</p>
-<h2>Execution model</h2>
-<ul>
-<li>Host validates inputs and mount policy.</li>
-<li>Container receives a constrained filesystem view.</li>
-<li>Agent tools execute inside container scope.</li>
-</ul>
-<h2>Mount strategy</h2>
-<ul>
-<li>Group working directory is mounted for task-specific writes.</li>
-<li>Global memory may be mounted read-only for shared context.</li>
-<li>Additional mounts are validated against an external allowlist.</li>
-</ul>
-<h2>Risk controls to look for</h2>
-<ul>
-<li>Path normalization and symlink resolution before mounting.</li>
-<li>Read-only defaults for sensitive mounts.</li>
-<li>Explicitly blocked credential-like paths.</li>
-</ul>
-<h2>Where to read next</h2>
-<ul>
-<li><code>src/container-runner.ts</code></li>
-<li><code>src/mount-security.ts</code></li>
-<li><code>docs/SECURITY.md</code></li>
-</ul></section>
-    <section class='chapter' id='05-data-model-and-state'><h1>Chapter 05 — Data Model and State</h1>
-<p>The database is the source of truth for runtime coordination.</p>
-<h2>Primary entities</h2>
-<ul>
-<li>Messages: inbound/outbound records used by the polling flow.</li>
-<li>Registered groups: maps JIDs to folder identities and trigger behavior.</li>
-<li>Scheduled tasks: recurrence metadata and next-run timestamps.</li>
-<li>Run logs: execution outcomes and diagnostics.</li>
-</ul>
-<h2>State responsibilities</h2>
-<ul>
-<li>Durable conversation/event history lives in SQLite.</li>
-<li>Session artifacts and IPC data live under <code>data/</code>.</li>
-<li>Group memory files live under <code>groups/{name}/</code>.</li>
-</ul>
-<h2>Operational rules</h2>
-<ul>
-<li>Keep schema changes explicit and test-backed.</li>
-<li>Avoid storing derived values when they can be recomputed.</li>
-<li>Ensure task status transitions are idempotent.</li>
-</ul></section>
-    <section class='chapter' id='06-skills-and-customization'><h1>Chapter 06 — Skills and Customization</h1>
-<p>NanoClaw emphasizes skills that transform your fork instead of shipping every feature in core.</p>
-<h2>Skill flow</h2>
-<ul>
-<li>User invokes skill (for example <code>/add-telegram</code>).</li>
-<li>Skill instructions guide repository edits.</li>
-<li>Resulting code is first-class source in your fork.</li>
-</ul>
-<h2>Why this model</h2>
-<ul>
-<li>Keeps base runtime minimal.</li>
-<li>Reduces dormant feature complexity in core.</li>
-<li>Encourages explicit, auditable changes in version control.</li>
-</ul>
-<h2>Files to understand</h2>
-<ul>
-<li><code>.claude/skills/*/SKILL.md</code></li>
-<li><code>skills-engine/*</code></li>
-<li><code>scripts/apply-skill.ts</code></li>
-</ul></section>
-    <section class='chapter' id='07-operations-and-debugging'><h1>Chapter 07 — Operations and Debugging</h1>
-<p>Use a component-first debugging approach: isolate whether the issue is channel, queue, IPC, container, scheduler, or routing.</p>
-<h2>Fast triage checklist</h2>
+<h2>Diagram: types to runtime behavior</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart TD
+  T[Type Definitions] --&gt; F[Function Contracts]
+  F --&gt; B[Branching Logic]
+  B --&gt; O[Observable Runtime]</pre></div>
+<h2>Useful mental equation</h2>
+<div class="math-block">$$
+\text{confidence} = \frac{\text{typed paths validated}}{\text{paths modified}}
+$$</div>
+<p>If you touch 5 paths and validate 2, your confidence is low.</p>
+<h2>Beginner checklist before editing</h2>
 <ol>
-<li>Is the channel connected and receiving messages?</li>
-<li>Is the message persisted in SQLite?</li>
-<li>Did queue processing start for that group?</li>
-<li>Did container execution launch successfully?</li>
-<li>Was a response generated and routed to the right JID?</li>
+<li>Find interface/type used by the function.</li>
+<li>Find tests touching that code path.</li>
+<li>Confirm nullable/optional fields are handled.</li>
+<li>Run targeted tests first.</li>
 </ol>
-<h2>Typical failure classes</h2>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>pick one function in <code>src/router.ts</code>, list its input type, output type, and one failure case.</p></div></div></article>
+<article class='chapter' id='03-how-claude-agents-work-in-nanoclaw'><div class='chapter-num'>03</div><h1 class='chapter-title'>How Claude Agents Work in NanoClaw</h1><div class='chapter-body'><p>NanoClaw does not run Claude in the host process. It spawns a containerized runner per group/task context. The host prepares prompt/context, mounts allowed folders, and consumes structured outputs. This separation limits blast radius and keeps authority in host code.</p>
+<h2>Agent lifecycle in practice</h2>
 <ul>
-<li>Auth/session failures in channel integration.</li>
-<li>Mount or runtime issues in container startup.</li>
-<li>Authorization rejection in IPC tasks.</li>
-<li>Scheduler expression or timezone mistakes.</li>
+<li>Host receives or schedules work</li>
+<li>Host prepares snapshots (tasks/groups/context)</li>
+<li>Container runner starts with controlled mounts</li>
+<li>Agent emits result/status/session updates</li>
+<li>Host persists state and routes user-visible output</li>
 </ul>
-<h2>Useful references</h2>
-<ul>
-<li><code>docs/DEBUG_CHECKLIST.md</code></li>
-<li><code>src/logger.ts</code></li>
-<li><code>src/ipc.ts</code></li>
-<li><code>src/task-scheduler.ts</code></li>
-</ul></section>
-    <section class='chapter' id='08-orchestrator-deep-dive'><h1>Chapter 08 — Orchestrator Deep Dive (<code>src/index.ts</code>)</h1>
-<p>The orchestrator is the runtime composition root. Most system behavior is understood by reading startup order and callback wiring.</p>
-<h2>Startup sequence</h2>
+<h2>Diagram: orchestrator to agent sequence</h2>
+<div class='diagram-wrap'><pre class='mermaid'>sequenceDiagram
+  participant O as Orchestrator
+  participant Q as GroupQueue
+  participant C as Container
+  participant A as Claude Agent
+  participant R as Router
+
+  O-&gt;&gt;Q: enqueue group work
+  Q-&gt;&gt;C: spawn with mounts
+  C-&gt;&gt;A: run prompt
+  A--&gt;&gt;C: result + status
+  C--&gt;&gt;O: parsed output
+  O-&gt;&gt;R: format outbound</pre></div>
+<h2>Reliability model</h2>
+<div class="math-block">$$
+P(\text{success by }k) = 1 - (1-p)^k
+$$</div>
+<p>Where $p$ is single-attempt success probability.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>trace where session IDs are loaded and saved in <code>src/index.ts</code>.</p></div></div></article>
+<article class='chapter' id='04-local-setup-and-first-safe-run'><div class='chapter-num'>04</div><h1 class='chapter-title'>Local Setup and First Safe Run</h1><div class='chapter-body'><p>This chapter turns setup into a deterministic process. The goal is to avoid “it works on one machine” surprises. You will validate prerequisites, startup sequence, and first healthy message loop.</p>
+<h2>Setup sequence</h2>
 <ol>
-<li>Initialize runtime prerequisites (container runtime, cleanup, DB).</li>
-<li>Load persisted state and register shutdown handlers.</li>
-<li>Create channel instances and connect transport(s).</li>
-<li>Start scheduler and IPC watcher loops.</li>
-<li>Start queue-driven message loop.</li>
+<li>Install dependencies (<code>npm ci</code>)</li>
+<li>Build (<code>npm run build</code>) or run dev (<code>npm run dev</code>)</li>
+<li>Ensure container runtime is available</li>
+<li>Authenticate channel (WhatsApp flow)</li>
+<li>Verify logs and group registration</li>
 </ol>
-<p>This order ensures state and infrastructure exist before asynchronous workloads begin.</p>
-<h2>Key responsibilities</h2>
+<h2>Diagram: setup decision tree</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart TD
+  A[Install deps] --&gt; B{Build OK?}
+  B -- no --&gt; X[Fix compile errors]
+  B -- yes --&gt; C{Runtime available?}
+  C -- no --&gt; Y[Start Docker/Container runtime]
+  C -- yes --&gt; D{Channel auth valid?}
+  D -- no --&gt; Z[Re-authenticate]
+  D -- yes --&gt; E[Healthy startup]</pre></div>
+<h2>Operational metric</h2>
+<div class="math-block">$$
+A = \frac{\text{successful startups}}{\text{startup attempts}}
+$$</div>
+<p>Track this during onboarding.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>define your own “healthy startup” checklist with 5 log signals.</p></div></div></article>
+<article class='chapter' id='05-configuration-and-environment-model'><div class='chapter-num'>05</div><h1 class='chapter-title'>Configuration and Environment Model</h1><div class='chapter-body'><p>Configuration lives mainly in <code>src/config.ts</code> and setup modules. Safe configuration changes preserve behavior predictability and filesystem boundaries.</p>
+<h2>What to learn</h2>
 <ul>
-<li>Source-of-truth for in-memory maps (<code>registeredGroups</code>, sessions, queue).</li>
-<li>Cross-component glue for callback interfaces.</li>
-<li>Graceful shutdown policy.</li>
-<li>Backpressure coordination via queue and concurrency limits.</li>
+<li>How defaults and env variables shape runtime behavior</li>
+<li>Which settings affect performance vs safety</li>
+<li>How to test config changes incrementally</li>
 </ul>
-<h2>Design patterns worth noting</h2>
+<h2>Diagram: configuration resolution</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart LR
+  D[Hardcoded Defaults] --&gt; E[Env Variables]
+  E --&gt; C[Computed Paths/Patterns]
+  C --&gt; R[Runtime Behavior]</pre></div>
+<h2>Frequency relation</h2>
+<div class="math-block">$$
+f = \frac{1}{\Delta t}
+$$</div>
+<p>If you decrease polling interval $\Delta t$, frequency increases.</p>
+<h2>Practical guardrails</h2>
 <ul>
-<li>Dependency injection through callback objects (low coupling).</li>
-<li>Durable persistence + polling instead of in-memory-only state.</li>
-<li>Queue-centric processing to preserve per-group ordering.</li>
+<li>Change one timing parameter at a time.</li>
+<li>Keep paths inside approved roots.</li>
+<li>Rebuild and verify logs after each change.</li>
 </ul>
-<h2>Reading exercise</h2>
-<p>Trace these in <code>src/index.ts</code>:</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>change one non-critical config value and document before/after behavior.</p></div></div></article>
+<article class='chapter' id='06-architecture-deep-dive-orchestrator-components'><div class='chapter-num'>06</div><h1 class='chapter-title'>Architecture Deep Dive: Orchestrator Components</h1><div class='chapter-body'><p>The orchestrator coordinates channels, persistence, scheduling, IPC, and container execution. Think in boundaries: each module should own one responsibility.</p>
+<h2>Module map</h2>
 <ul>
-<li>Where inbound messages are persisted.</li>
-<li>Where group ownership is resolved for outbound replies.</li>
-<li>Where subsystems start independently and why that matters.</li>
-</ul></section>
-    <section class='chapter' id='09-scheduler-and-task-engine'><h1>Chapter 09 — Scheduler and Task Engine</h1>
-<p>Scheduled tasks are host-managed jobs that trigger agent execution with explicit group context.</p>
-<h2>Lifecycle of a scheduled task</h2>
-<ol>
-<li>Task definition created (type, schedule value, context mode, target JID).</li>
-<li><code>next_run</code> computed and persisted.</li>
-<li>Scheduler loop scans due tasks.</li>
-<li>Due task is executed through the same group processing contracts.</li>
-<li>Result and timing are logged; <code>next_run</code> advanced or task completed.</li>
-</ol>
-<h2>Important invariants</h2>
-<ul>
-<li>Only authorized group scopes can create/manage tasks.</li>
-<li><code>next_run</code> transitions must be deterministic and idempotent.</li>
-<li>Failed runs should not corrupt schedule state.</li>
+<li><code>src/index.ts</code>: startup and main loop</li>
+<li><code>src/router.ts</code>: message formatting/routing</li>
+<li><code>src/ipc.ts</code>: task/message IPC watcher</li>
+<li><code>src/db.ts</code>: schema and data access</li>
+<li><code>src/task-scheduler.ts</code>: periodic task orchestration</li>
 </ul>
-<h2>Common correctness pitfalls</h2>
+<h2>Diagram: dependency map</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart TB
+  IDX[index.ts] --&gt; DB[db.ts]
+  IDX --&gt; RT[router.ts]
+  IDX --&gt; IPC[ipc.ts]
+  IDX --&gt; SCH[task-scheduler.ts]
+  IDX --&gt; CR[container-runner.ts]</pre></div>
+<h2>Coupling intuition</h2>
+<div class="math-block">$$
+R = \frac{E_{inter}}{E_{total}}
+$$</div>
+<p>Lower $R$ generally means simpler maintenance.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>identify one boundary where adding a helper function would reduce coupling.</p></div></div></article>
+<article class='chapter' id='07-channel-intake-and-message-normalization'><div class='chapter-num'>07</div><h1 class='chapter-title'>Channel Intake and Message Normalization</h1><div class='chapter-body'><p>Channel adapters turn platform-specific payloads into NanoClaw’s internal message shape. Normalization is where many production bugs start.</p>
+<h2>Key outcomes</h2>
 <ul>
-<li>Cron timezone mismatches.</li>
-<li>Interval parsing and numeric validation errors.</li>
-<li>Duplicate execution when status transitions are not atomic enough.</li>
+<li>Understand inbound extraction path in channel adapter</li>
+<li>Normalize content/timestamps/sender safely</li>
+<li>Separate transport quirks from core logic</li>
 </ul>
-<h2>Suggested audit checklist</h2>
+<h2>Diagram: inbound normalization sequence</h2>
+<div class='diagram-wrap'><pre class='mermaid'>sequenceDiagram
+  participant SDK as Channel SDK
+  participant AD as Adapter
+  participant DB as DB API
+  SDK-&gt;&gt;AD: raw event
+  AD-&gt;&gt;AD: normalize fields
+  AD-&gt;&gt;DB: storeMessage/storeChatMetadata</pre></div>
+<h2>Error-rate metric</h2>
+<div class="math-block">$$
+ e = \frac{N_{invalid}}{N_{total}}
+$$</div>
+<p>Reduce $e$ with strict normalization and fallback handling.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>inspect one inbound branch in <code>src/channels/whatsapp.ts</code> and list optional fields that can be missing.</p></div></div></article>
+<article class='chapter' id='08-routing-and-outbound-response-path'><div class='chapter-num'>08</div><h1 class='chapter-title'>Routing and Outbound Response Path</h1><div class='chapter-body'><p>Routing decides where responses go and what content is visible to users. Keep decision logic separate from formatting logic.</p>
+<h2>Learnings</h2>
 <ul>
-<li>Verify schedule parser error paths are fail-closed.</li>
-<li>Verify paused/canceled tasks cannot execute.</li>
-<li>Verify once-tasks complete exactly once.</li>
-</ul></section>
-    <section class='chapter' id='10-routing-and-channels'><h1>Chapter 10 — Routing and Channels</h1>
-<p>NanoClaw separates transport concerns (channels) from formatting/routing concerns (router).</p>
-<h2>Channel contract</h2>
-<p>The channel abstraction in <code>src/types.ts</code> defines:</p>
-<ul>
-<li><code>connect()</code> / <code>disconnect()</code> lifecycle</li>
-<li><code>sendMessage(jid, text)</code> outbound primitive</li>
-<li><code>ownsJid(jid)</code> ownership resolution</li>
-<li>Optional typing indicators</li>
+<li>Trigger-based processing vs normal conversational flow</li>
+<li>Outbound sanitization (<code>formatOutbound</code> path)</li>
+<li>Channel lookup and ownership checks</li>
 </ul>
-<p>This lets the host route by JID without embedding transport-specific logic in business flow.</p>
-<h2>Router role</h2>
-<p><code>src/router.ts</code> normalizes outbound content and handles message output policy.</p>
+<h2>Diagram: outbound routing branches</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart LR
+  M[Processed Message] --&gt; T{Trigger/Task Output?}
+  T -- yes --&gt; F[Format + strip internal tags]
+  T -- no --&gt; G[Skip or hold]
+  F --&gt; C[Find owning channel]
+  C --&gt; S[Send]</pre></div>
+<h2>Throughput framing</h2>
+<div class="math-block">$$
+\lambda_{out} \approx \min(\lambda_{in}, \mu)
+$$</div>
+<p>Outgoing rate cannot exceed system service rate $\mu$.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>add a temporary log field to routing and verify one full outbound path.</p></div></div></article>
+<article class='chapter' id='09-container-runtime-and-agent-execution'><div class='chapter-num'>09</div><h1 class='chapter-title'>Container Runtime and Agent Execution</h1><div class='chapter-body'><p>Containers are execution sandboxes, not authority boundaries. Host remains source of truth; containers run scoped work.</p>
+<h2>Understand</h2>
 <ul>
-<li>Format before send to avoid transport drift.</li>
-<li>Keep channel adapters thin.</li>
+<li>How container spawn is parameterized</li>
+<li>Why mounts are constrained per group</li>
+<li>How output markers are parsed back into host state</li>
 </ul>
-<h2>Multi-channel correctness rules</h2>
+<h2>Diagram: container spawn lifecycle</h2>
+<div class='diagram-wrap'><pre class='mermaid'>sequenceDiagram
+  participant O as Orchestrator
+  participant R as ContainerRunner
+  participant C as Container
+  O-&gt;&gt;R: runContainerAgent(config)
+  R-&gt;&gt;C: start with mounts/env
+  C--&gt;&gt;R: output/status markers
+  R--&gt;&gt;O: parsed ContainerOutput</pre></div>
+<h2>Latency budget</h2>
+<div class="math-block">$$
+L_{total} = L_{queue} + L_{exec} + L_{io}
+$$</div>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>inspect container logs for one run and map each phase to this equation.</p></div></div></article>
+<article class='chapter' id='10-ipc-and-task-processing-loop'><div class='chapter-num'>10</div><h1 class='chapter-title'>IPC and Task Processing Loop</h1><div class='chapter-body'><p>IPC loop polls task/message files, validates requests, and applies host-authorized actions.</p>
+<h2>Learn</h2>
 <ul>
-<li>Every outbound send must resolve exactly one owning channel.</li>
-<li>Unknown JID should fail loudly with observability.</li>
-<li>Channel adapters should not duplicate router formatting logic.</li>
+<li>Folder-based source identity model</li>
+<li>Task processing stages and idempotency concerns</li>
+<li>Retry/backoff behavior for transient issues</li>
 </ul>
-<h2>Reading exercise</h2>
-<p>Compare <code>src/channels/whatsapp.ts</code> with <code>src/router.ts</code> and list what each file must never do.</p></section>
-    <section class='chapter' id='11-safe-change-playbook'><h1>Chapter 11 — Safe Change Playbook</h1>
-<p>This is a practical method for making changes without destabilizing NanoClaw.</p>
-<h2>Step 1: Define scope tightly</h2>
+<h2>Diagram: task state machine</h2>
+<div class='diagram-wrap'><pre class='mermaid'>stateDiagram-v2
+  [*] --&gt; queued
+  queued --&gt; running
+  running --&gt; success
+  running --&gt; retrying
+  retrying --&gt; queued
+  running --&gt; failed</pre></div>
+<h2>Backoff formula</h2>
+<div class="math-block">$$
+ t_n = t_0 2^n
+$$</div>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>trace one IPC task from file creation to completion using logs and DB state.</p></div></div></article>
+<article class='chapter' id='11-sqlite-state-and-data-models'><div class='chapter-num'>11</div><h1 class='chapter-title'>SQLite State and Data Models</h1><div class='chapter-body'><p>SQLite stores chat/message history, routing cursors, sessions, registered groups, and scheduled tasks.</p>
+<h2>Focus</h2>
 <ul>
-<li>Name the behavior change in one sentence.</li>
-<li>Identify exact files that should change.</li>
-<li>Explicitly list files that must not change.</li>
+<li>Which tables are operationally critical</li>
+<li>Why cursor/session state must persist correctly</li>
+<li>How query patterns influence reliability</li>
 </ul>
-<h2>Step 2: Trace existing path first</h2>
+<h2>Diagram: persistence model</h2>
+<div class='diagram-wrap'><pre class='mermaid'>erDiagram
+  chats ||--o{ messages : contains
+  registered_groups ||--o{ scheduled_tasks : owns
+  scheduled_tasks ||--o{ task_run_logs : emits
+  router_state {
+    string key
+    string value
+  }</pre></div>
+<h2>Queue intuition</h2>
+<div class="math-block">$$
+L = \lambda W
+$$</div>
+<p>Little’s Law helps reason about backlog under load.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>run a query that lists newest message timestamp per group and compare with router cursor state.</p></div></div></article>
+<article class='chapter' id='12-scheduler-and-periodic-workloads'><div class='chapter-num'>12</div><h1 class='chapter-title'>Scheduler and Periodic Workloads</h1><div class='chapter-body'><p>Scheduler scans due tasks and enqueues execution through the same queue/container model.</p>
+<h2>What to master</h2>
 <ul>
-<li>Reproduce current behavior.</li>
-<li>Trace call flow through orchestrator, IPC, and container boundaries.</li>
-<li>Identify security checks and persistence touchpoints.</li>
+<li>Due-task detection and status transitions</li>
+<li>Cron vs interval vs once semantics</li>
+<li>How scheduler interacts with queue limits</li>
 </ul>
-<h2>Step 3: Change one seam at a time</h2>
+<h2>Diagram: scheduled execution flow</h2>
+<div class='diagram-wrap'><pre class='mermaid'>sequenceDiagram
+  participant S as Scheduler
+  participant D as DB
+  participant Q as Queue
+  participant C as Container
+  S-&gt;&gt;D: getDueTasks()
+  S-&gt;&gt;Q: enqueueTask()
+  Q-&gt;&gt;C: runTask()
+  C--&gt;&gt;D: logTaskRun/updateTaskAfterRun</pre></div>
+<h2>Utilization equation</h2>
+<div class="math-block">$$
+\rho = \frac{\lambda}{\mu}
+$$</div>
+<p>Keep $\rho$ below 1 for stable queues.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>configure one low-risk periodic task and verify its run logs over two cycles.</p></div></div></article>
+<article class='chapter' id='13-skills-system-and-customization-workflow'><div class='chapter-num'>13</div><h1 class='chapter-title'>Skills System and Customization Workflow</h1><div class='chapter-body'><p>Skills are structured modifications with manifests, dependency checks, conflict checks, and rollback behavior.</p>
+<h2>Learn</h2>
 <ul>
-<li>Prefer extending existing handler patterns.</li>
-<li>Keep data contracts backward compatible where possible.</li>
-<li>Avoid combining security changes and feature changes in one commit.</li>
+<li>How skill manifests define adds/modifies/dependencies</li>
+<li>Why lock + backup + state recording is mandatory</li>
+<li>How customization sessions protect long-lived forks</li>
 </ul>
-<h2>Step 4: Validate locally</h2>
+<h2>Diagram: skill pipeline</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart TD
+  M[Read Manifest] --&gt; P[Preflight Checks]
+  P --&gt; L[Acquire Lock]
+  L --&gt; B[Create Backup]
+  B --&gt; A[Apply Changes]
+  A --&gt; S[Record State]</pre></div>
+<h2>Conflict intuition</h2>
+<div class="math-block">$$
+P_{conflict} \propto n \cdot d
+$$</div>
+<p>More touched files ($n$) and drift ($d$) increase conflict risk.</p>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>inspect one skill manifest and explain two safety checks before apply.</p></div></div></article>
+<article class='chapter' id='14-testing-debugging-and-observability'><div class='chapter-num'>14</div><h1 class='chapter-title'>Testing, Debugging, and Observability</h1><div class='chapter-body'><p>Start narrow, then widen. Debugging and tests are feedback loops, not separate activities.</p>
+<h2>Key habits</h2>
 <ul>
-<li>Run build/typecheck/tests.</li>
-<li>Run targeted tests near changed modules.</li>
-<li>Inspect logs for rejected auth cases and edge paths.</li>
+<li>Run focused tests first for changed paths</li>
+<li>Use structured logs to localize layer failures</li>
+<li>Confirm fix with targeted reproduction before broad suite</li>
 </ul>
-<h2>Step 5: Review with risk lens</h2>
+<h2>Diagram: triage path</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart TD
+  S[Symptom] --&gt; L{Layer?}
+  L --&gt; C[Channel]
+  L --&gt; O[Orchestrator]
+  L --&gt; I[IPC]
+  L --&gt; R[Runtime]
+  C --&gt; F[Fix + verify]
+  O --&gt; F
+  I --&gt; F
+  R --&gt; F</pre></div>
+<h2>Flake metric</h2>
+<div class="math-block">$$
+F = \frac{N_{nondeterministic\ failures}}{N_{runs}}
+$$</div>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>pick one failing path and write a 3-step reproducible debug procedure.</p></div></div></article>
+<article class='chapter' id='15-security-and-isolation-principles'><div class='chapter-num'>15</div><h1 class='chapter-title'>Security and Isolation Principles</h1><div class='chapter-body'><p>Security here is mostly boundary discipline: validate untrusted input, enforce mount restrictions, and keep authorization in host code.</p>
+<h2>Principles</h2>
 <ul>
-<li>Could untrusted groups trigger this path?</li>
-<li>Could this path execute host shell commands?</li>
-<li>Could this bypass mount or task authorization boundaries?</li>
+<li>Least privilege for mounts and capabilities</li>
+<li>Path canonicalization before allowlist checks</li>
+<li>No trust in container-provided claims without host validation</li>
 </ul>
-<h2>Step 6: Document the decision</h2>
+<h2>Diagram: trust pipeline</h2>
+<div class='diagram-wrap'><pre class='mermaid'>flowchart LR
+  U[Untrusted Input] --&gt; V[Validation]
+  V --&gt; P[Policy Check]
+  P --&gt; X[Constrained Execution]
+  X --&gt; A[Audited Action]</pre></div>
+<h2>Risk model</h2>
+<div class="math-block">$$
+R = P(\text{exploit}) \times I(\text{impact})
+$$</div>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>review one code path for trust-boundary crossing and list its validations.</p></div></div></article>
+<article class='chapter' id='16-operations-updates-and-production-readiness'><div class='chapter-num'>16</div><h1 class='chapter-title'>Operations, Updates, and Production Readiness</h1><div class='chapter-body'><p>Production-readiness means predictable startup, safe updates, and fast recovery.</p>
+<h2>Outcome goals</h2>
 <ul>
-<li>Capture intent, constraints, and rollback plan in PR notes.</li>
-<li>Update docs/skills only where user behavior actually changes.</li>
-</ul></section>
-  </main>
+<li>Operate service lifecycle confidently</li>
+<li>Apply updates/migrations with rollback awareness</li>
+<li>Monitor core reliability indicators</li>
+</ul>
+<h2>Diagram: update cycle</h2>
+<div class='diagram-wrap'><pre class='mermaid'>sequenceDiagram
+  participant O as Operator
+  participant S as Service
+  participant M as Migration
+  O-&gt;&gt;S: stop/snapshot
+  O-&gt;&gt;M: run update+migrations
+  O-&gt;&gt;S: restart
+  S--&gt;&gt;O: health signals
+  O-&gt;&gt;S: keep or rollback</pre></div>
+<h2>Availability framing</h2>
+<div class="math-block">$$
+\text{SLO} = 1 - \frac{\text{downtime}}{\text{total time}}
+$$</div>
+<div class='callout exercise'><div class='callout-title'>&#9998; Exercise</div><p>write a mini runbook with pre-update checks, rollback trigger, and post-update verification.</p></div></div></article>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mermaid (ESM module, renders async) -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: false, theme: isDark ? 'dark' : 'default' });
+    try { await mermaid.run({ querySelector: '.mermaid' }); } catch (e) { console.warn('Mermaid render:', e); }
+  </script>
+
+  <!-- KaTeX (synchronous at end of body so renderMathInElement exists) -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script>
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$',  right: '$',  display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      throwOnError: false,
+      ignoredTags: ['script','noscript','style','textarea','pre','code']
+    });
+  </script>
+
+  <!-- Navigation & UI -->
+  <script>
+  (function() {
+    // --- Progress bar ---
+    var bar = document.getElementById('progress');
+    window.addEventListener('scroll', function() {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (h > 0 ? (window.scrollY / h * 100) : 0) + '%';
+    });
+
+    // --- ToC active tracking ---
+    var tocLinks = Array.from(document.querySelectorAll('.sidebar a[href^="#"]'));
+    var chapters = Array.from(document.querySelectorAll('.chapter'));
+
+    function updateActive() {
+      var scrollY = window.scrollY + 120;
+      var active = chapters[0];
+      for (var i = 0; i < chapters.length; i++) {
+        if (chapters[i].offsetTop <= scrollY) active = chapters[i];
+      }
+      tocLinks.forEach(function(a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + active.id);
+      });
+    }
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+
+    // --- Smooth scroll ---
+    tocLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var id = link.getAttribute('href');
+        if (!id || id.length < 2) return;
+        var el = document.getElementById(id.slice(1));
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.replaceState(null, '', id);
+        }
+      });
+    });
+  })();
+  </script>
 </body>
 </html>

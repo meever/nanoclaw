@@ -1,34 +1,38 @@
 # NanoClaw Learning Book
 
-This folder is a structured learning path for understanding NanoClaw end-to-end.
+This is a fresh, sequential book for learning NanoClaw from zero.
 
-## Learning goal
+## Audience
 
-Understand the codebase from architecture to runtime behavior so you can safely customize it.
+- New to TypeScript
+- New to Claude/agent workflows
+- Wants practical, safe changes in this repository
 
-## Chapter order
+## Book structure
 
-1. `00-roadmap.md` — how to use this learning track
-2. `01-system-overview.md` — core architecture and boundaries
-3. `02-runtime-message-flow.md` — message lifecycle through the orchestrator
-4. `03-ipc-and-authorization.md` — IPC design and trust model
-5. `04-container-and-agent-runner.md` — isolation, mounts, and agent execution
-6. `05-data-model-and-state.md` — SQLite tables and persistent state
-7. `06-skills-and-customization.md` — how skills modify behavior
-8. `07-operations-and-debugging.md` — practical runbook for troubleshooting
-9. `08-orchestrator-deep-dive.md` — `src/index.ts` control flow and subsystem lifecycle
-10. `09-scheduler-and-task-engine.md` — scheduled task lifecycle and execution contracts
-11. `10-routing-and-channels.md` — channel abstraction and routing semantics
-12. `11-safe-change-playbook.md` — how to modify NanoClaw safely and incrementally
+Chapters are ordered to reduce cognitive load:
 
-## Build the HTML book
+1. Foundations and glossary
+2. TypeScript essentials used in this codebase
+3. Claude agent model in NanoClaw
+4. Setup and first run
+5. Configuration model
+6. Architecture map
+7. Channel intake
+8. Routing and outbound path
+9. Container runtime
+10. IPC and task processing
+11. SQLite state model
+12. Scheduler
+13. Skills customization
+14. Testing/debugging
+15. Security and isolation
+16. Operations and updates
 
-Run:
+## Build HTML
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/build-learn-book.ps1
+powershell -ExecutionPolicy Bypass -File learn/build-book.ps1
 ```
 
-Output:
-
-- `learn/book.html`
+Output: `learn/book.html`
