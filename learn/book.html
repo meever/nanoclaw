@@ -1,0 +1,367 @@
+﻿<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>NanoClaw Learning Book</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 0; padding: 0; line-height: 1.55; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px; }
+    h1, h2, h3 { line-height: 1.2; }
+    nav { padding: 16px; border: 1px solid #7f7f7f55; border-radius: 8px; margin-bottom: 24px; }
+    nav ul { margin: 0; padding-left: 20px; }
+    .chapter { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #7f7f7f33; }
+    pre { overflow: auto; padding: 12px; border-radius: 8px; background: #00000018; }
+    code { font-family: Consolas, Menlo, monospace; }
+    a { text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>NanoClaw Learning Book</h1>
+    <p>Generated from markdown chapters in <code>learn/chapters</code>.</p>
+    <nav>
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href='#00-roadmap'>00-roadmap</a></li>
+        <li><a href='#01-system-overview'>01-system-overview</a></li>
+        <li><a href='#02-runtime-message-flow'>02-runtime-message-flow</a></li>
+        <li><a href='#03-ipc-and-authorization'>03-ipc-and-authorization</a></li>
+        <li><a href='#04-container-and-agent-runner'>04-container-and-agent-runner</a></li>
+        <li><a href='#05-data-model-and-state'>05-data-model-and-state</a></li>
+        <li><a href='#06-skills-and-customization'>06-skills-and-customization</a></li>
+        <li><a href='#07-operations-and-debugging'>07-operations-and-debugging</a></li>
+        <li><a href='#08-orchestrator-deep-dive'>08-orchestrator-deep-dive</a></li>
+        <li><a href='#09-scheduler-and-task-engine'>09-scheduler-and-task-engine</a></li>
+        <li><a href='#10-routing-and-channels'>10-routing-and-channels</a></li>
+        <li><a href='#11-safe-change-playbook'>11-safe-change-playbook</a></li>
+      </ul>
+    </nav>
+    <section class='chapter' id='00-roadmap'><h1>Chapter 00 — Roadmap</h1>
+<p>This learning track is designed to move from high-level understanding to implementation detail.</p>
+<h2>How to use this</h2>
+<ul>
+<li>Read chapters in order.</li>
+<li>Keep <code>src/index.ts</code> open while reading Chapters 1–3.</li>
+<li>For each chapter, map concepts to concrete files.</li>
+</ul>
+<h2>Learning outcomes</h2>
+<p>After this track, you should be able to:</p>
+<ul>
+<li>Explain NanoClaw's trust boundaries and where isolation is enforced.</li>
+<li>Trace one message from inbound channel to outbound reply.</li>
+<li>Add or modify behavior safely without breaking scheduling or IPC.</li>
+<li>Diagnose common failures using logs and component boundaries.</li>
+</ul>
+<h2>Source map</h2>
+<ul>
+<li><code>src/index.ts</code>: orchestration and loop wiring</li>
+<li><code>src/channels/whatsapp.ts</code>: channel integration</li>
+<li><code>src/router.ts</code>: outbound formatting and routing</li>
+<li><code>src/container-runner.ts</code>: container invocation</li>
+<li><code>src/ipc.ts</code>: IPC watcher and task processing</li>
+<li><code>src/task-scheduler.ts</code>: scheduled task execution</li>
+<li><code>src/db.ts</code>: persistence layer</li>
+</ul></section>
+    <section class='chapter' id='01-system-overview'><h1>Chapter 01 — System Overview</h1>
+<p>NanoClaw is a single Node.js host process that receives messages, stores state in SQLite, and delegates agent reasoning to isolated containers.</p>
+<h2>Core architectural pieces</h2>
+<ul>
+<li>Host orchestrator (<code>src/index.ts</code>): process lifecycle, queueing, and subsystem startup.</li>
+<li>Channel adapters (<code>src/channels/*</code>): transport-specific inbound/outbound integration.</li>
+<li>SQLite persistence (<code>src/db.ts</code>): messages, tasks, router state, sessions metadata.</li>
+<li>Scheduler (<code>src/task-scheduler.ts</code>): evaluates due tasks and triggers execution.</li>
+<li>IPC watcher (<code>src/ipc.ts</code>): file-based bridge between container and host.</li>
+<li>Container runner (<code>src/container-runner.ts</code>): isolated execution environment.</li>
+</ul>
+<h2>Trust boundaries</h2>
+<ul>
+<li>Main group: administrative authority.</li>
+<li>Non-main groups: untrusted by default.</li>
+<li>Container agents: sandboxed and constrained to mounts.</li>
+<li>Host process: authority for routing, auth checks, and task writes.</li>
+</ul>
+<h2>Why this shape works</h2>
+<ul>
+<li>Keeps mutable authority in one place (host).</li>
+<li>Moves reasoning and tool execution into isolated sandboxes.</li>
+<li>Uses simple primitives (SQLite + filesystem IPC) for debuggability.</li>
+</ul></section>
+    <section class='chapter' id='02-runtime-message-flow'><h1>Chapter 02 — Runtime Message Flow</h1>
+<p>This chapter traces one inbound chat message to its eventual reply.</p>
+<h2>1) Channel ingestion</h2>
+<p>The channel adapter receives a message and calls orchestrator callbacks:</p>
+<ul>
+<li>Persist inbound message.</li>
+<li>Persist chat metadata.</li>
+<li>Associate message with channel-specific JID.</li>
+</ul>
+<h2>2) Queue and polling</h2>
+<p>The orchestrator polling loop discovers unprocessed messages and enqueues work by group.</p>
+<ul>
+<li>Per-group ordering is maintained.</li>
+<li>Global concurrency limits prevent resource exhaustion.</li>
+</ul>
+<h2>3) Group processing</h2>
+<p>For each queue item:</p>
+<ul>
+<li>Resolve registered group and policy (<code>requiresTrigger</code>, trigger patterns).</li>
+<li>Gather recent context and state.</li>
+<li>Start or reuse container execution path.</li>
+</ul>
+<h2>4) Agent execution</h2>
+<p><code>src/container-runner.ts</code> prepares mounts and environment, then invokes the agent runner.</p>
+<ul>
+<li>Group folder is writable.</li>
+<li>Global memory and project mounts are controlled by role and policy.</li>
+</ul>
+<h2>5) Output routing</h2>
+<p>Agent output is post-processed and sent through <code>src/router.ts</code>.</p>
+<ul>
+<li>Formatting normalizes outbound content.</li>
+<li>Correct channel is selected by JID ownership.</li>
+</ul></section>
+    <section class='chapter' id='03-ipc-and-authorization'><h1>Chapter 03 — IPC and Authorization</h1>
+<p>NanoClaw uses file-based IPC for container-to-host requests.</p>
+<h2>IPC layout</h2>
+<ul>
+<li>Base: <code>data/ipc/{groupFolder}/</code></li>
+<li>Messages: <code>messages/*.json</code></li>
+<li>Tasks: <code>tasks/*.json</code></li>
+<li>Errors: <code>data/ipc/errors/</code></li>
+</ul>
+<h2>Why group-folder identity matters</h2>
+<p>The source identity is derived from the directory path, not just payload content.</p>
+<ul>
+<li>Prevents spoofing by payload-only claims.</li>
+<li>Enables clear main/non-main authorization decisions.</li>
+</ul>
+<h2>Authorization patterns</h2>
+<ul>
+<li>Main group can perform admin operations.</li>
+<li>Non-main groups are restricted to self-scoped operations.</li>
+<li>Sensitive operations are rejected when identity or ownership fails.</li>
+</ul>
+<h2>Practical audit checks</h2>
+<ul>
+<li>Every new IPC task type should include explicit auth checks.</li>
+<li>Task handlers should fail closed on missing required fields.</li>
+<li>Rejections should log source context for forensics.</li>
+</ul></section>
+    <section class='chapter' id='04-container-and-agent-runner'><h1>Chapter 04 — Container and Agent Runner</h1>
+<p>Container execution is NanoClaw's main security boundary.</p>
+<h2>Execution model</h2>
+<ul>
+<li>Host validates inputs and mount policy.</li>
+<li>Container receives a constrained filesystem view.</li>
+<li>Agent tools execute inside container scope.</li>
+</ul>
+<h2>Mount strategy</h2>
+<ul>
+<li>Group working directory is mounted for task-specific writes.</li>
+<li>Global memory may be mounted read-only for shared context.</li>
+<li>Additional mounts are validated against an external allowlist.</li>
+</ul>
+<h2>Risk controls to look for</h2>
+<ul>
+<li>Path normalization and symlink resolution before mounting.</li>
+<li>Read-only defaults for sensitive mounts.</li>
+<li>Explicitly blocked credential-like paths.</li>
+</ul>
+<h2>Where to read next</h2>
+<ul>
+<li><code>src/container-runner.ts</code></li>
+<li><code>src/mount-security.ts</code></li>
+<li><code>docs/SECURITY.md</code></li>
+</ul></section>
+    <section class='chapter' id='05-data-model-and-state'><h1>Chapter 05 — Data Model and State</h1>
+<p>The database is the source of truth for runtime coordination.</p>
+<h2>Primary entities</h2>
+<ul>
+<li>Messages: inbound/outbound records used by the polling flow.</li>
+<li>Registered groups: maps JIDs to folder identities and trigger behavior.</li>
+<li>Scheduled tasks: recurrence metadata and next-run timestamps.</li>
+<li>Run logs: execution outcomes and diagnostics.</li>
+</ul>
+<h2>State responsibilities</h2>
+<ul>
+<li>Durable conversation/event history lives in SQLite.</li>
+<li>Session artifacts and IPC data live under <code>data/</code>.</li>
+<li>Group memory files live under <code>groups/{name}/</code>.</li>
+</ul>
+<h2>Operational rules</h2>
+<ul>
+<li>Keep schema changes explicit and test-backed.</li>
+<li>Avoid storing derived values when they can be recomputed.</li>
+<li>Ensure task status transitions are idempotent.</li>
+</ul></section>
+    <section class='chapter' id='06-skills-and-customization'><h1>Chapter 06 — Skills and Customization</h1>
+<p>NanoClaw emphasizes skills that transform your fork instead of shipping every feature in core.</p>
+<h2>Skill flow</h2>
+<ul>
+<li>User invokes skill (for example <code>/add-telegram</code>).</li>
+<li>Skill instructions guide repository edits.</li>
+<li>Resulting code is first-class source in your fork.</li>
+</ul>
+<h2>Why this model</h2>
+<ul>
+<li>Keeps base runtime minimal.</li>
+<li>Reduces dormant feature complexity in core.</li>
+<li>Encourages explicit, auditable changes in version control.</li>
+</ul>
+<h2>Files to understand</h2>
+<ul>
+<li><code>.claude/skills/*/SKILL.md</code></li>
+<li><code>skills-engine/*</code></li>
+<li><code>scripts/apply-skill.ts</code></li>
+</ul></section>
+    <section class='chapter' id='07-operations-and-debugging'><h1>Chapter 07 — Operations and Debugging</h1>
+<p>Use a component-first debugging approach: isolate whether the issue is channel, queue, IPC, container, scheduler, or routing.</p>
+<h2>Fast triage checklist</h2>
+<ol>
+<li>Is the channel connected and receiving messages?</li>
+<li>Is the message persisted in SQLite?</li>
+<li>Did queue processing start for that group?</li>
+<li>Did container execution launch successfully?</li>
+<li>Was a response generated and routed to the right JID?</li>
+</ol>
+<h2>Typical failure classes</h2>
+<ul>
+<li>Auth/session failures in channel integration.</li>
+<li>Mount or runtime issues in container startup.</li>
+<li>Authorization rejection in IPC tasks.</li>
+<li>Scheduler expression or timezone mistakes.</li>
+</ul>
+<h2>Useful references</h2>
+<ul>
+<li><code>docs/DEBUG_CHECKLIST.md</code></li>
+<li><code>src/logger.ts</code></li>
+<li><code>src/ipc.ts</code></li>
+<li><code>src/task-scheduler.ts</code></li>
+</ul></section>
+    <section class='chapter' id='08-orchestrator-deep-dive'><h1>Chapter 08 — Orchestrator Deep Dive (<code>src/index.ts</code>)</h1>
+<p>The orchestrator is the runtime composition root. Most system behavior is understood by reading startup order and callback wiring.</p>
+<h2>Startup sequence</h2>
+<ol>
+<li>Initialize runtime prerequisites (container runtime, cleanup, DB).</li>
+<li>Load persisted state and register shutdown handlers.</li>
+<li>Create channel instances and connect transport(s).</li>
+<li>Start scheduler and IPC watcher loops.</li>
+<li>Start queue-driven message loop.</li>
+</ol>
+<p>This order ensures state and infrastructure exist before asynchronous workloads begin.</p>
+<h2>Key responsibilities</h2>
+<ul>
+<li>Source-of-truth for in-memory maps (<code>registeredGroups</code>, sessions, queue).</li>
+<li>Cross-component glue for callback interfaces.</li>
+<li>Graceful shutdown policy.</li>
+<li>Backpressure coordination via queue and concurrency limits.</li>
+</ul>
+<h2>Design patterns worth noting</h2>
+<ul>
+<li>Dependency injection through callback objects (low coupling).</li>
+<li>Durable persistence + polling instead of in-memory-only state.</li>
+<li>Queue-centric processing to preserve per-group ordering.</li>
+</ul>
+<h2>Reading exercise</h2>
+<p>Trace these in <code>src/index.ts</code>:</p>
+<ul>
+<li>Where inbound messages are persisted.</li>
+<li>Where group ownership is resolved for outbound replies.</li>
+<li>Where subsystems start independently and why that matters.</li>
+</ul></section>
+    <section class='chapter' id='09-scheduler-and-task-engine'><h1>Chapter 09 — Scheduler and Task Engine</h1>
+<p>Scheduled tasks are host-managed jobs that trigger agent execution with explicit group context.</p>
+<h2>Lifecycle of a scheduled task</h2>
+<ol>
+<li>Task definition created (type, schedule value, context mode, target JID).</li>
+<li><code>next_run</code> computed and persisted.</li>
+<li>Scheduler loop scans due tasks.</li>
+<li>Due task is executed through the same group processing contracts.</li>
+<li>Result and timing are logged; <code>next_run</code> advanced or task completed.</li>
+</ol>
+<h2>Important invariants</h2>
+<ul>
+<li>Only authorized group scopes can create/manage tasks.</li>
+<li><code>next_run</code> transitions must be deterministic and idempotent.</li>
+<li>Failed runs should not corrupt schedule state.</li>
+</ul>
+<h2>Common correctness pitfalls</h2>
+<ul>
+<li>Cron timezone mismatches.</li>
+<li>Interval parsing and numeric validation errors.</li>
+<li>Duplicate execution when status transitions are not atomic enough.</li>
+</ul>
+<h2>Suggested audit checklist</h2>
+<ul>
+<li>Verify schedule parser error paths are fail-closed.</li>
+<li>Verify paused/canceled tasks cannot execute.</li>
+<li>Verify once-tasks complete exactly once.</li>
+</ul></section>
+    <section class='chapter' id='10-routing-and-channels'><h1>Chapter 10 — Routing and Channels</h1>
+<p>NanoClaw separates transport concerns (channels) from formatting/routing concerns (router).</p>
+<h2>Channel contract</h2>
+<p>The channel abstraction in <code>src/types.ts</code> defines:</p>
+<ul>
+<li><code>connect()</code> / <code>disconnect()</code> lifecycle</li>
+<li><code>sendMessage(jid, text)</code> outbound primitive</li>
+<li><code>ownsJid(jid)</code> ownership resolution</li>
+<li>Optional typing indicators</li>
+</ul>
+<p>This lets the host route by JID without embedding transport-specific logic in business flow.</p>
+<h2>Router role</h2>
+<p><code>src/router.ts</code> normalizes outbound content and handles message output policy.</p>
+<ul>
+<li>Format before send to avoid transport drift.</li>
+<li>Keep channel adapters thin.</li>
+</ul>
+<h2>Multi-channel correctness rules</h2>
+<ul>
+<li>Every outbound send must resolve exactly one owning channel.</li>
+<li>Unknown JID should fail loudly with observability.</li>
+<li>Channel adapters should not duplicate router formatting logic.</li>
+</ul>
+<h2>Reading exercise</h2>
+<p>Compare <code>src/channels/whatsapp.ts</code> with <code>src/router.ts</code> and list what each file must never do.</p></section>
+    <section class='chapter' id='11-safe-change-playbook'><h1>Chapter 11 — Safe Change Playbook</h1>
+<p>This is a practical method for making changes without destabilizing NanoClaw.</p>
+<h2>Step 1: Define scope tightly</h2>
+<ul>
+<li>Name the behavior change in one sentence.</li>
+<li>Identify exact files that should change.</li>
+<li>Explicitly list files that must not change.</li>
+</ul>
+<h2>Step 2: Trace existing path first</h2>
+<ul>
+<li>Reproduce current behavior.</li>
+<li>Trace call flow through orchestrator, IPC, and container boundaries.</li>
+<li>Identify security checks and persistence touchpoints.</li>
+</ul>
+<h2>Step 3: Change one seam at a time</h2>
+<ul>
+<li>Prefer extending existing handler patterns.</li>
+<li>Keep data contracts backward compatible where possible.</li>
+<li>Avoid combining security changes and feature changes in one commit.</li>
+</ul>
+<h2>Step 4: Validate locally</h2>
+<ul>
+<li>Run build/typecheck/tests.</li>
+<li>Run targeted tests near changed modules.</li>
+<li>Inspect logs for rejected auth cases and edge paths.</li>
+</ul>
+<h2>Step 5: Review with risk lens</h2>
+<ul>
+<li>Could untrusted groups trigger this path?</li>
+<li>Could this path execute host shell commands?</li>
+<li>Could this bypass mount or task authorization boundaries?</li>
+</ul>
+<h2>Step 6: Document the decision</h2>
+<ul>
+<li>Capture intent, constraints, and rollback plan in PR notes.</li>
+<li>Update docs/skills only where user behavior actually changes.</li>
+</ul></section>
+  </main>
+</body>
+</html>

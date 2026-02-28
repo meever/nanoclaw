@@ -16,7 +16,8 @@
     "prepare": "husky",
     "setup": "tsx setup/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "learn:build": "powershell -ExecutionPolicy Bypass -File scripts/build-learn-book.ps1"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
